@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>主减速比 i₀ 确定工具 · 式5-4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600&display=swap');
+:root{
+  --bg:#101e33;--surf:#162840;--surf2:#1e3254;--surf3:#263d60;
+  --ink:#d8eaf8;--ink2:#90b8d8;--ink3:#4a7090;
+  --teal:#2de0c8;--teal2:#50ead8;--teal-bg:#093838;
+  --blue:#4da8ff;--amber:#ffc840;--red:#ff6058;--green:#38d980;--violet:#b08aff;
+  --rule:#1e3a58;--rule2:#162840;
+  --mono:'JetBrains Mono',monospace;
+  --serif:'Noto Serif SC',serif;
+  --sans:'Noto Sans SC',sans-serif;
+  --r:6px;--r2:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#1e3550;border-radius:2px}
+
+/* ─── HEADER ─── */
+.hdr{
+  background:linear-gradient(135deg,#0a1828,#102840);
+  border-bottom:1px solid #254d7a;
+  padding:14px 24px;display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:100;
+}
+.hdr-icon{font-size:1.8rem;filter:drop-shadow(0 0 12px var(--teal))}
+.hdr h1{font-family:var(--serif);font-size:1.2rem;font-weight:700;color:#fff}
+.hdr-sub{font-size:1.02rem;color:rgba(255,255,255,.5);margin-top:2px;font-family:var(--mono)}
+.formula-badge{
+  margin-left:auto;background:var(--teal-bg);border:1px solid var(--teal);
+  border-radius:var(--r2);padding:8px 18px;font-family:var(--mono);font-size:1.2rem;
+  color:var(--teal);font-weight:700;letter-spacing:.02em;white-space:nowrap;
+  box-shadow:0 0 18px rgba(45,224,200,.15);
+}
+.formula-badge span{color:rgba(255,255,255,.7)}
+
+/* ─── LAYOUT ─── */
+.layout{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 58px);overflow:hidden}
+.left{background:#112035;border-right:1px solid var(--rule);overflow-y:auto;padding:14px}
+.right{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+
+/* ─── RESULT BOX ─── */
+.result-hero{
+  background:linear-gradient(135deg,#0c1e30,#122844);
+  border:1px solid #1a4060;border-radius:var(--r2);
+  padding:20px 24px;display:flex;align-items:center;gap:24px;
+  box-shadow:0 0 40px rgba(45,224,200,.08),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.result-main{flex:1;text-align:center}
+.result-label{font-size:1.02rem;color:var(--ink3);font-family:var(--mono);letter-spacing:.1em;margin-bottom:6px}
+.result-val{font-family:var(--mono);font-size:4rem;font-weight:700;
+  color:var(--teal);line-height:1;text-shadow:0 0 30px rgba(45,224,200,.5)}
+.result-unit{font-size:1.1rem;color:var(--ink3);margin-left:4px}
+.result-formula{font-family:var(--mono);font-size:1.02rem;color:var(--ink3);margin-top:8px}
+.result-divider{width:1px;height:80px;background:var(--rule);flex-shrink:0}
+.result-meta{display:flex;flex-direction:column;gap:12px;min-width:200px}
+.meta-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.meta-k{font-size:1.2rem;color:var(--ink3)}
+.meta-v{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--ink2)}
+
+/* ─── GAUGE ─── */
+.gauge-wrap{background:var(--surf);border:1px solid var(--rule);border-radius:var(--r2);padding:16px}
+.gauge-title{font-size:1.05rem;font-weight:700;color:var(--ink3);letter-spacing:.06em;margin-bottom:12px}
+.gauge-track{height:28px;border-radius:14px;background:#112538;position:relative;overflow:hidden;
+  border:1px solid var(--rule)}
+.gauge-fill{height:100%;border-radius:14px;background:linear-gradient(90deg,var(--green),var(--teal),var(--amber),var(--red));
+  transition:width .3s ease}
+.gauge-ptr{position:absolute;top:50%;transform:translate(-50%,-50%);
+  width:3px;height:36px;background:#fff;border-radius:2px;
+  box-shadow:0 0 8px rgba(255,255,255,.8);transition:left .3s ease}
+.gauge-labels{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:.94rem;color:var(--ink3)}
+.ref-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:1.02rem}
+.ref-table th{background:#0e1e30;color:var(--ink3);padding:6px 10px;text-align:left;
+  border:1px solid var(--rule);font-weight:600;font-size:1.2rem}
+.ref-table td{padding:6px 10px;border:1px solid var(--rule2);font-family:var(--mono)}
+.ref-table tr:nth-child(even) td{background:#102238}
+.ref-highlight{background:#0c2030!important;border-left:2px solid var(--teal)!important}
+.ref-highlight td:first-child{color:var(--teal);font-weight:700}
+
+/* ─── PARAM GROUPS ─── */
+.pgroup{background:var(--surf);border:1px solid var(--rule);border-radius:var(--r2);overflow:hidden;margin-bottom:10px}
+.pgroup-hdr{background:#0e1e30;padding:8px 12px;display:flex;align-items:center;gap:8px;
+  font-size:.98rem;font-weight:700;color:var(--ink3);letter-spacing:.06em;
+  border-bottom:1px solid var(--rule)}
+.pgroup-hdr .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.prow{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.prow+.prow{border-top:1px solid var(--rule2)}
+.plabel{display:flex;justify-content:space-between;align-items:baseline}
+.plabel-name{font-size:1.02rem;color:var(--ink2);font-weight:600}
+.plabel-sym{font-family:var(--mono);font-size:1.1rem;color:var(--teal);font-weight:700}
+.plabel-unit{font-size:.92rem;color:var(--ink3);font-family:var(--mono)}
+.pinput-row{display:flex;align-items:center;gap:8px}
+.pslider{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;
+  background:linear-gradient(90deg,var(--teal) var(--pct,50%),#1a3050 var(--pct,50%));
+  outline:none;cursor:pointer}
+.pslider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--teal);box-shadow:0 0 8px rgba(45,224,200,.6);cursor:pointer;transition:.1s}
+.pslider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;border:none;
+  background:var(--teal);box-shadow:0 0 8px rgba(45,224,200,.6);cursor:pointer}
+.pnum{width:76px;background:#102238;border:1px solid var(--rule);border-radius:var(--r);
+  padding:5px 8px;color:var(--teal);font-family:var(--mono);font-size:1.1rem;
+  font-weight:700;text-align:center;outline:none}
+.pnum:focus{border-color:var(--teal)}
+.prange-hint{display:flex;justify-content:space-between;font-size:.90rem;color:var(--ink3);font-family:var(--mono)}
+
+/* ─── CHARTS GRID ─── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chart-card{background:var(--surf);border:1px solid var(--rule);border-radius:var(--r2);padding:14px}
+.chart-title{font-size:1.02rem;font-weight:700;color:var(--ink3);letter-spacing:.06em;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px}
+.chart-title .sym{font-family:var(--mono);color:var(--teal);font-size:1.1rem}
+canvas.sc{width:100%;border-radius:4px}
+
+/* ─── GEAR SECTION ─── */
+.gear-wrap{background:var(--surf);border:1px solid var(--rule);border-radius:var(--r2);padding:16px}
+.gear-title{font-size:1.05rem;font-weight:700;color:var(--ink3);letter-spacing:.06em;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px}
+.gear-title .badge{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal);
+  padding:2px 8px;border-radius:4px;font-size:1.2rem;font-family:var(--mono)}
+.gear-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.gear-input-box{background:#102238;border:1px solid var(--rule);border-radius:var(--r);padding:8px 10px}
+.gear-input-box label{font-size:.94rem;color:var(--ink3);display:block;margin-bottom:4px}
+.gear-input-box input{width:100%;background:none;border:none;outline:none;
+  color:var(--amber);font-family:var(--mono);font-size:1.2rem;font-weight:700;text-align:center}
+.gear-result{background:#0e2035;border:1px solid var(--rule);border-radius:var(--r);
+  padding:12px;text-align:center}
+.gear-result-val{font-family:var(--mono);font-size:2rem;font-weight:700;color:var(--amber)}
+.gear-result-delta{font-size:1.0rem;margin-top:4px}
+.gear-combos{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.combo-chip{background:var(--surf3);border:1px solid var(--rule);border-radius:20px;
+  padding:4px 12px;font-family:var(--mono);font-size:1.2rem;color:var(--ink2);
+  cursor:pointer;transition:.15s}
+.combo-chip:hover{border-color:var(--amber);color:var(--amber)}
+.combo-chip.selected{background:#1a1800;border-color:var(--amber);color:var(--amber);font-weight:700}
+.combo-chip .err{font-size:.90rem;color:var(--ink3);margin-left:4px}
+user-select: none
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="hdr">
+  <div class="hdr-icon">⚙️</div>
+  <div>
+    <h1>主减速器传动比 i₀ 确定</h1>
+    <div class="hdr-sub">基于最高车速约束 · 参数灵敏度分析 · 齿数修正</div>
+  </div>
+  <div class="formula-badge">
+    i₀ <span>=</span> 0.377 × rᵣ × nₚ <span>/</span> (v<sub style="font-size:.7em">amax</sub> × i<sub style="font-size:.7em">gb</sub>)
+  </div>
+</div>
+
+<div class="layout">
+<!-- ══════ LEFT PANEL ══════ -->
+<div class="left">
+
+  <!-- 发动机参数 -->
+  <div class="pgroup">
+    <div class="pgroup-hdr">
+      <div class="dot" style="background:var(--red)"></div>发动机参数
+    </div>
+    <div class="prow">
+      <div class="plabel">
+        <span class="plabel-name">最大功率时转速 nₚ</span>
+        <span class="plabel-unit">r/min</span>
+      </div>
+      <div class="pinput-row">
+        <input class="pslider" type="range" id="sl_np" min="1500" max="6000" step="50" value="3000"
+          oninput="syncNum('np',this.value);calc()">
+        <input class="pnum" type="number" id="n_np" value="3000" min="1500" max="6000" step="50"
+          oninput="syncSlider('np',this.value);calc()">
+      </div>
+      <div class="prange-hint"><span>1500</span><span>6000</span></div>
+    </div>
+  </div>
+
+  <!-- 整车参数 -->
+  <div class="pgroup">
+    <div class="pgroup-hdr">
+      <div class="dot" style="background:var(--green)"></div>整车参数
+    </div>
+    <div class="prow">
+      <div class="plabel">
+        <span class="plabel-name">车轮滚动半径 rᵣ</span>
+        <span class="plabel-unit">m</span>
+      </div>
+      <div class="pinput-row">
+        <input class="pslider" type="range" id="sl_rr" min="0.25" max="0.55" step="0.001" value="0.367"
+          oninput="syncNum('rr',this.value);calc()">
+        <input class="pnum" type="number" id="n_rr" value="0.367" min="0.25" max="0.55" step="0.001"
+          oninput="syncSlider('rr',this.value);calc()">
+      </div>
+      <div class="prange-hint"><span>0.25 m</span><span>0.55 m</span></div>
+    </div>
+    <div class="prow">
+      <div class="plabel">
+        <span class="plabel-name">最高车速 v<sub>amax</sub></span>
+        <span class="plabel-unit">km/h</span>
+      </div>
+      <div class="pinput-row">
+        <input class="pslider" type="range" id="sl_va" min="60" max="220" step="1" value="120"
+          oninput="syncNum('va',this.value);calc()">
+        <input class="pnum" type="number" id="n_va" value="120" min="60" max="220" step="1"
+          oninput="syncSlider('va',this.value);calc()">
+      </div>
+      <div class="prange-hint"><span>60 km/h</span><span>220 km/h</span></div>
+    </div>
+  </div>
+
+  <!-- 变速器参数 -->
+  <div class="pgroup">
+    <div class="pgroup-hdr">
+      <div class="dot" style="background:var(--blue)"></div>变速器参数
+    </div>
+    <div class="prow">
+      <div class="plabel">
+        <span class="plabel-name">最高档传动比 i<sub>gb</sub></span>
+        <span class="plabel-unit">—</span>
+      </div>
+      <div class="pinput-row">
+        <input class="pslider" type="range" id="sl_igb" min="0.5" max="1.5" step="0.001" value="0.793"
+          oninput="syncNum('igb',this.value);calc()">
+        <input class="pnum" type="number" id="n_igb" value="0.793" min="0.5" max="1.5" step="0.001"
+          oninput="syncSlider('igb',this.value);calc()">
+      </div>
+      <div class="prange-hint"><span>0.50</span><span>1.50</span></div>
+    </div>
+    <div class="prow">
+      <div class="plabel">
+        <span class="plabel-name">常用最高档预设</span>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:2px">
+        <button class="combo-chip" onclick="setIgb(1.000)">1.000（直驱）</button>
+        <button class="combo-chip" onclick="setIgb(0.793)">0.793（五档OD）</button>
+        <button class="combo-chip" onclick="setIgb(0.750)">0.750</button>
+        <button class="combo-chip" onclick="setIgb(0.700)">0.700</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 说明框 -->
+  <div style="background:#0d1c2e;border:1px solid #0e2040;border-radius:var(--r2);padding:12px;
+    font-size:.98rem;color:var(--ink3);line-height:1.8;border-left:3px solid var(--teal)">
+    <div style="color:var(--ink2);font-weight:700;margin-bottom:6px">📐 式5-4 参数说明</div>
+    <div><span style="color:var(--teal);font-family:var(--mono)">rᵣ</span> — 车轮滚动半径（m）</div>
+    <div><span style="color:var(--teal);font-family:var(--mono)">nₚ</span> — 发动机最大功率时转速</div>
+    <div><span style="color:var(--teal);font-family:var(--mono)">v<sub>amax</sub></span> — 设计最高车速（km/h）</div>
+    <div><span style="color:var(--teal);font-family:var(--mono)">i<sub>gb</sub></span> — 变速器最高档传动比</div>
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--rule2)">
+      系数 <span style="color:var(--amber);font-family:var(--mono)">0.377</span> = 1000/(3600×2π/60) × π
+      — 由单位换算导出（km/h → m/s）
+    </div>
+  </div>
+
+</div><!-- /left -->
+
+<!-- ══════ RIGHT PANEL ══════ -->
+<div class="right">
+
+  <!-- 结果显示 -->
+  <div class="result-hero">
+    <div class="result-main">
+      <div class="result-label">计算结果 · 主减速比</div>
+      <div style="display:flex;align-items:baseline;justify-content:center">
+        <div class="result-val" id="res_i0">—</div>
+        <span style="font-family:var(--mono);font-size:1.5rem;color:var(--teal);margin-left:6px;opacity:.6">i₀</span>
+      </div>
+      <div class="result-formula" id="res_formula">—</div>
+    </div>
+    <div class="result-divider"></div>
+    <div class="result-meta">
+      <div class="meta-row">
+        <span class="meta-k">顶档发动机转速</span>
+        <span class="meta-v" id="meta_n_vamax">— r/min</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-k">与目标转速之差 Δn</span>
+        <span class="meta-v" id="meta_dn">—</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-k">车速误差（±2%警戒）</span>
+        <span class="meta-v" id="meta_verr">—</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-k">驱动力系数检验</span>
+        <span class="meta-v" id="meta_check">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- i₀ 量程 / 同类对标 -->
+  <div class="gauge-wrap">
+    <div class="gauge-title">同类车型 i₀ 典型范围对比</div>
+    <div style="position:relative;margin-bottom:6px">
+      <div class="gauge-track">
+        <div class="gauge-fill" id="gf" style="width:100%"></div>
+        <div class="gauge-ptr" id="gptr" style="left:50%"></div>
+      </div>
+    </div>
+    <div class="gauge-labels"><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+    <table class="ref-table" id="ref_table">
+      <thead><tr>
+        <th>车型</th><th>i₀ 典型范围</th><th>当前值状态</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- 灵敏度分析 -->
+  <div style="font-size:1.02rem;font-weight:700;color:var(--ink3);letter-spacing:.08em;padding:2px 0">
+    ▸ 参数灵敏度分析 — 单参数变化对 i₀ 的影响
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title"><span class="sym">nₚ</span> 发动机转速 → i₀</div>
+      <canvas class="sc" id="ch_np" height="160"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="sym">rᵣ</span> 车轮半径 → i₀</div>
+      <canvas class="sc" id="ch_rr" height="160"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="sym">v<sub>amax</sub></span> 最高车速 → i₀</div>
+      <canvas class="sc" id="ch_va" height="160"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="sym">i<sub>gb</sub></span> 最高档传动比 → i₀</div>
+      <canvas class="sc" id="ch_igb" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- 齿数分配 -->
+  <div class="gear-wrap">
+    <div class="gear-title">
+      主减速齿轮齿数分配
+      <span class="badge">按实际可用齿数修正 i₀</span>
+    </div>
+
+    <!-- ① 齿轮类型 + 车辆类型 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div>
+        <div style="font-size:.92rem;color:var(--ink3);margin-bottom:5px;letter-spacing:.05em">齿轮类型</div>
+        <div style="display:flex;gap:4px">
+          <button id="btn_hypoid" onclick="setGearType('hypoid')"
+            style="flex:1;padding:6px 4px;border-radius:4px;font-size:1.0rem;font-weight:700;cursor:pointer;
+            border:1px solid var(--teal);background:var(--teal-bg);color:var(--teal);transition:.15s">
+            双曲面齿轮</button>
+          <button id="btn_bevel" onclick="setGearType('bevel')"
+            style="flex:1;padding:6px 4px;border-radius:4px;font-size:1.0rem;font-weight:700;cursor:pointer;
+            border:1px solid var(--rule);background:var(--surf2);color:var(--ink3);transition:.15s">
+            弧齿锥齿轮</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.92rem;color:var(--ink3);margin-bottom:5px;letter-spacing:.05em">车辆类型（z₁下限）</div>
+        <div style="display:flex;gap:4px">
+          <button id="btn_pass" onclick="setVehType('passenger')"
+            style="flex:1;padding:6px 4px;border-radius:4px;font-size:1.0rem;font-weight:700;cursor:pointer;
+            border:1px solid var(--blue);background:#0b2240;color:var(--blue);transition:.15s">
+            乘用车 z₁≥9</button>
+          <button id="btn_comm" onclick="setVehType('commercial')"
+            style="flex:1;padding:6px 4px;border-radius:4px;font-size:1.0rem;font-weight:700;cursor:pointer;
+            border:1px solid var(--rule);background:var(--surf2);color:var(--ink3);transition:.15s">
+            商用车 z₁≥6</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 公式说明 -->
+    <div id="gear_formula_desc" style="background:#0d1c2e;border:1px solid var(--rule);border-radius:var(--r);
+      padding:9px 12px;margin-bottom:10px;font-family:var(--mono);font-size:1.0rem;
+      color:var(--ink3);line-height:1.9;border-left:3px solid var(--teal)"></div>
+
+    <!-- ③ K系数（仅双曲面） -->
+    <div id="k_row" style="margin-bottom:10px">
+      <div class="plabel" style="margin-bottom:5px">
+        <span class="plabel-name" style="font-size:1.0rem">螺旋角修正系数 K = cosβ₂/cosβ₁</span>
+        <span class="plabel-unit">β₁&gt;β₂ → K&gt;1，典型值 1.25~1.50</span>
+      </div>
+      <div class="pinput-row">
+        <input class="pslider" type="range" id="sl_K" min="1.10" max="1.60" step="0.01" value="1.35"
+          oninput="syncNum('K',this.value);calcGear()">
+        <input class="pnum" type="number" id="n_K" value="1.35" min="1.10" max="1.60" step="0.01"
+          oninput="syncSlider('K',this.value);calcGear()">
+      </div>
+      <div class="prange-hint"><span>1.10</span><span>1.60</span></div>
+    </div>
+
+    <!-- ④ 齿数输入 + 结果 -->
+    <div class="gear-grid">
+      <div class="gear-input-box">
+        <label>主动齿轮齿数 z₁</label>
+        <input type="number" id="g_z1" value="9" min="6" max="20" oninput="calcGear()">
+      </div>
+      <div class="gear-input-box">
+        <label>从动齿轮齿数 z₂</label>
+        <input type="number" id="g_z2" value="41" min="20" max="120" oninput="calcGear()">
+      </div>
+      <div class="gear-result">
+        <div style="font-size:.90rem;color:var(--ink3);margin-bottom:4px" id="g_result_label">实际 i₀_gear</div>
+        <div class="gear-result-val" id="g_result">—</div>
+        <div class="gear-result-delta" id="g_delta">—</div>
+      </div>
+    </div>
+
+    <!-- ⑤ 准则检验 -->
+    <div style="margin:12px 0 10px;background:#0d1c2e;border:1px solid var(--rule);border-radius:var(--r);padding:10px 12px">
+      <div style="font-size:1.2rem;font-weight:700;color:var(--ink3);letter-spacing:.06em;margin-bottom:8px">齿数分配设计准则检验</div>
+      <div id="rules_check" style="display:flex;flex-direction:column;gap:5px"></div>
+    </div>
+    <!-- 反算最高车速 -->
+    <div style="border-top:1px solid var(--rule);margin:12px 0 10px;padding-top:12px">
+      <div style="font-size:.98rem;font-weight:700;color:var(--ink3);letter-spacing:.06em;margin-bottom:10px;
+        display:flex;align-items:center;gap:8px">
+        ↩ 最高车速反算
+        <span style="background:#051820;color:var(--teal);border:1px solid var(--teal);
+          padding:2px 8px;border-radius:4px;font-size:.94rem;font-family:var(--mono)">
+          v<sub>amax</sub> = 0.377 × rᵣ × nₚ / (i<sub>gb</sub> × i₀_gear)
+        </span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:#0e2035;border:1px solid #1a4060;border-radius:var(--r);
+          padding:12px;text-align:center;grid-column:1/2">
+          <div style="font-size:.90rem;color:var(--ink3);margin-bottom:6px;font-family:var(--mono)">
+            实际最高车速
+          </div>
+          <div style="font-family:var(--mono);font-size:2rem;font-weight:700;
+            color:var(--teal);line-height:1;text-shadow:0 0 20px rgba(45,224,200,.4)"
+            id="rv_vamax">—</div>
+          <div style="font-size:1.2rem;color:var(--ink3);margin-top:4px">km/h</div>
+        </div>
+        <div style="background:#0e2035;border:1px solid var(--rule);border-radius:var(--r);
+          padding:12px;display:flex;flex-direction:column;gap:8px;justify-content:center">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.92rem;color:var(--ink3)">设计目标 v<sub>amax</sub></span>
+            <span style="font-family:var(--mono);font-size:1.1rem;color:var(--ink2)" id="rv_target">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.92rem;color:var(--ink3)">差值 Δv</span>
+            <span style="font-family:var(--mono);font-size:1.1rem;font-weight:700" id="rv_dv">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.92rem;color:var(--ink3)">偏差率</span>
+            <span style="font-family:var(--mono);font-size:1.1rem;font-weight:700" id="rv_pct">—</span>
+          </div>
+        </div>
+        <div style="background:#0e2035;border:1px solid var(--rule);border-radius:var(--r);
+          padding:10px;display:flex;flex-direction:column;gap:6px;justify-content:center">
+          <div style="font-size:.90rem;color:var(--ink3);margin-bottom:2px">推导过程</div>
+          <div style="font-family:var(--mono);font-size:.94rem;color:var(--ink3);line-height:1.9"
+            id="rv_steps">—</div>
+        </div>
+      </div>
+      <!-- 速度对比条 -->
+      <div style="margin-top:10px;background:#0d1c2e;border:1px solid var(--rule);
+        border-radius:var(--r);padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;font-size:.92rem;
+          color:var(--ink3);margin-bottom:6px">
+          <span>0 km/h</span>
+          <span id="rv_bar_label" style="color:var(--ink2)">车速对比</span>
+          <span>250 km/h</span>
+        </div>
+        <div style="position:relative;height:20px;background:#102238;border-radius:10px;overflow:hidden">
+          <!-- 设计目标 -->
+          <div id="rv_bar_design" style="position:absolute;left:0;height:100%;
+            background:rgba(160,160,255,0.3);border-radius:10px;transition:width .3s;
+            border-right:2px solid #8080ff"></div>
+          <!-- 实际反算 -->
+          <div id="rv_bar_actual" style="position:absolute;left:0;height:100%;
+            background:rgba(45,224,200,0.25);border-radius:10px;transition:width .3s;
+            border-right:2px solid var(--teal)"></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:6px;font-size:.92rem;font-family:var(--mono)">
+          <span style="color:#8080ff">▌ 设计目标 v<sub>amax</sub></span>
+          <span style="color:var(--teal)">▌ 反算实际最高车速</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:.98rem;color:var(--ink3);margin-bottom:6px" id="combos_label">推荐相近齿数组合（误差 &lt; 2.5%）：</div>
+    <div class="gear-combos" id="gear_combos"></div>
+  </div>
+
+</div><!-- /right -->
+</div><!-- /layout -->
+
+<script>
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const P={np:3000,rr:0.367,va:120,igb:0.793};
+let i0_calc=0;
+let gearType='hypoid';   // 'hypoid' | 'bevel'
+let vehType='passenger'; // 'passenger' | 'commercial'
+
+const REF=[
+  {name:'高速轿车',lo:2.8,hi:4.2,color:'#4da8ff'},
+  {name:'普通轿车',lo:3.5,hi:5.0,color:'#38d980'},
+  {name:'微型车',lo:4.0,hi:5.8,color:'#2de0c8'},
+  {name:'轻型客车',lo:4.5,hi:6.5,color:'#b08aff'},
+  {name:'中型客车/货车',lo:5.5,hi:7.5,color:'#ffc840'},
+  {name:'重型货车',lo:6.0,hi:9.5,color:'#ff6058'},
+];
+
+// ═══════════════════════════════════════════════
+//  CORE FORMULA
+// ═══════════════════════════════════════════════
+function calcI0(np,rr,va,igb){
+  return 0.377*rr*np/(va*igb);
+}
+
+// ═══════════════════════════════════════════════
+//  SYNC
+// ═══════════════════════════════════════════════
+function syncNum(key,val){
+  document.getElementById('n_'+key).value=parseFloat(val);
+  updateSliderFill('sl_'+key);
+}
+function syncSlider(key,val){
+  const sl=document.getElementById('sl_'+key);
+  sl.value=parseFloat(val);
+  updateSliderFill('sl_'+key);
+}
+function updateSliderFill(id){
+  const sl=document.getElementById(id);
+  const pct=100*(sl.value-sl.min)/(sl.max-sl.min);
+  sl.style.setProperty('--pct',pct+'%');
+}
+function setIgb(v){
+  P.igb=v;
+  document.getElementById('n_igb').value=v;
+  document.getElementById('sl_igb').value=v;
+  updateSliderFill('sl_igb');
+  calc();
+}
+
+// ═══════════════════════════════════════════════
+//  MAIN CALC
+// ═══════════════════════════════════════════════
+function getVals(){
+  P.np=parseFloat(document.getElementById('n_np').value)||P.np;
+  P.rr=parseFloat(document.getElementById('n_rr').value)||P.rr;
+  P.va=parseFloat(document.getElementById('n_va').value)||P.va;
+  P.igb=parseFloat(document.getElementById('n_igb').value)||P.igb;
+}
+
+function calc(){
+  getVals();
+  i0_calc=calcI0(P.np,P.rr,P.va,P.igb);
+
+  // Result display
+  document.getElementById('res_i0').textContent=i0_calc.toFixed(3);
+  document.getElementById('res_formula').textContent=
+    `0.377 × ${P.rr} × ${P.np} / (${P.va} × ${P.igb}) = ${i0_calc.toFixed(3)}`;
+
+  // Meta
+  const n_vamax=P.va*P.igb*i0_calc/(0.377*P.rr);
+  document.getElementById('meta_n_vamax').textContent=n_vamax.toFixed(0)+' r/min';
+  const dn=Math.abs(n_vamax-P.np);
+  document.getElementById('meta_dn').textContent=dn.toFixed(0)+' r/min';
+
+  const v_actual=0.377*P.rr*P.np/(P.igb*i0_calc);
+  const verr=Math.abs(v_actual-P.va)/P.va*100;
+  const veEl=document.getElementById('meta_verr');
+  veEl.textContent=verr.toFixed(2)+'%';
+  veEl.style.color=verr<2?'var(--green)':'var(--amber)';
+
+  document.getElementById('meta_check').textContent='✓ 公式精确解';
+
+  // Gauge
+  const gMin=2,gMax=10;
+  const pct=Math.min(100,Math.max(0,(i0_calc-gMin)/(gMax-gMin)*100));
+  document.getElementById('gptr').style.left=pct+'%';
+
+  // Ref table
+  const tbody=document.querySelector('#ref_table tbody');
+  tbody.innerHTML='';
+  REF.forEach(r=>{
+    const inRange=i0_calc>=r.lo&&i0_calc<=r.hi;
+    const tr=document.createElement('tr');
+    if(inRange) tr.className='ref-highlight';
+    const lo_pct=(r.lo-gMin)/(gMax-gMin)*100;
+    const hi_pct=(r.hi-gMin)/(gMax-gMin)*100;
+    const barWidth=hi_pct-lo_pct;
+    tr.innerHTML=`<td style="border:1px solid var(--rule2);color:${r.color};font-weight:${inRange?700:400}">${r.name}</td>
+      <td style="border:1px solid var(--rule2);padding:4px 8px">
+        <div style="position:relative;height:12px;background:#102238;border-radius:6px;overflow:hidden">
+          <div style="position:absolute;left:${lo_pct}%;width:${barWidth}%;height:100%;background:${r.color}44;border-radius:4px;border:1px solid ${r.color}66"></div>
+          ${inRange?`<div style="position:absolute;left:${pct}%;transform:translateX(-50%);width:2px;height:100%;background:#fff;border-radius:1px"></div>`:''}
+        </div>
+        <div style="font-family:var(--mono);font-size:.94rem;color:var(--ink3);margin-top:2px">${r.lo} ~ ${r.hi}</div>
+      </td>
+      <td style="border:1px solid var(--rule2);font-family:var(--mono);font-size:1.02rem;color:${inRange?'var(--teal)':'var(--ink3)'}">
+        ${inRange?`✓ 在范围内`:`${i0_calc<r.lo?`偏小 ${(r.lo-i0_calc).toFixed(2)}`:`偏大 ${(i0_calc-r.hi).toFixed(2)}`}`}
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Charts
+  drawAllCharts();
+  calcGear();
+}
+
+// ═══════════════════════════════════════════════
+//  CHART ENGINE
+// ═══════════════════════════════════════════════
+function drawChart(canvasId,xArr,yArr,xCur,yCur,xLabel,xMin,xMax,accentColor){
+  const canvas=document.getElementById(canvasId);
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth||400,H=160;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const pad={l:42,r:12,t:10,b:30};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+
+  // BG
+  ctx.fillStyle='#080f1a'; ctx.fillRect(0,0,W,H);
+
+  const yMin=Math.min(...yArr)*0.9, yMax=Math.max(...yArr)*1.08;
+  function px(x){ return pad.l+(x-xMin)/(xMax-xMin)*cw; }
+  function py(y){ return pad.t+ch-(y-yMin)/(yMax-yMin)*ch; }
+
+  // Grid
+  ctx.strokeStyle='#162840'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=yMin+(yMax-yMin)*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,py(y)); ctx.lineTo(pad.l+cw,py(y)); ctx.stroke();
+    ctx.fillStyle='#4a7090'; ctx.font=`${10}px JetBrains Mono`;
+    ctx.textAlign='right'; ctx.fillText(y.toFixed(2),pad.l-4,py(y)+4);
+  }
+  for(let i=0;i<=4;i++){
+    const x=xMin+(xMax-xMin)*i/4;
+    ctx.beginPath(); ctx.moveTo(px(x),pad.t); ctx.lineTo(px(x),pad.t+ch); ctx.stroke();
+    ctx.fillStyle='#4a7090'; ctx.font=`${9}px JetBrains Mono`;
+    ctx.textAlign='center'; ctx.fillText(x.toFixed(xMax>100?0:3),px(x),pad.t+ch+14);
+  }
+
+  // Reference lines (i0=3 to 8)
+  [3,4,5,6,7,8].forEach(ref=>{
+    if(ref>=yMin&&ref<=yMax){
+      ctx.strokeStyle='rgba(45,224,200,0.12)'; ctx.lineWidth=1; ctx.setLineDash([3,5]);
+      ctx.beginPath(); ctx.moveTo(pad.l,py(ref)); ctx.lineTo(pad.l+cw,py(ref)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(45,224,200,0.4)'; ctx.font=`9px JetBrains Mono`;
+      ctx.textAlign='left'; ctx.fillText('i₀='+ref,pad.l+2,py(ref)-2);
+    }
+  });
+
+  // Gradient fill under curve
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+  grad.addColorStop(0,accentColor+'40');
+  grad.addColorStop(1,accentColor+'05');
+  ctx.fillStyle=grad;
+  ctx.beginPath();
+  ctx.moveTo(px(xArr[0]),pad.t+ch);
+  xArr.forEach((x,i)=>ctx.lineTo(px(x),py(yArr[i])));
+  ctx.lineTo(px(xArr[xArr.length-1]),pad.t+ch);
+  ctx.closePath(); ctx.fill();
+
+  // Curve
+  ctx.strokeStyle=accentColor; ctx.lineWidth=2; ctx.setLineDash([]);
+  ctx.beginPath();
+  xArr.forEach((x,i)=>{
+    if(i===0) ctx.moveTo(px(x),py(yArr[i]));
+    else ctx.lineTo(px(x),py(yArr[i]));
+  });
+  ctx.stroke();
+
+  // Current value vertical line
+  ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(px(xCur),pad.t); ctx.lineTo(px(xCur),pad.t+ch); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Current value dot
+  ctx.beginPath(); ctx.arc(px(xCur),py(yCur),5,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(px(xCur),py(yCur),3,0,Math.PI*2);
+  ctx.fillStyle=accentColor; ctx.fill();
+
+  // Current value label
+  ctx.fillStyle='#fff'; ctx.font=`bold 11px JetBrains Mono`;
+  const lx=px(xCur)+(px(xCur)>W-60?-38:8);
+  const ly=Math.max(py(yCur)-8,pad.t+14);
+  ctx.fillText('i₀='+yCur.toFixed(3),lx,ly);
+
+  // X axis label
+  ctx.fillStyle='#3a6080'; ctx.font=`9px Noto Sans SC,sans-serif`;
+  ctx.textAlign='center'; ctx.fillText(xLabel,pad.l+cw/2,H-2);
+}
+
+function drawAllCharts(){
+  const{np,rr,va,igb}=P;
+  const N=60;
+
+  // np chart
+  const npArr=Array.from({length:N},(_,i)=>1500+(6000-1500)*i/(N-1));
+  drawChart('ch_np',npArr,npArr.map(n=>calcI0(n,rr,va,igb)),np,i0_calc,
+    'nₚ (r/min)',1500,6000,'#ff6058');
+
+  // rr chart
+  const rrArr=Array.from({length:N},(_,i)=>0.25+(0.55-0.25)*i/(N-1));
+  drawChart('ch_rr',rrArr,rrArr.map(r=>calcI0(np,r,va,igb)),rr,i0_calc,
+    'rᵣ (m)',0.25,0.55,'#38d980');
+
+  // va chart
+  const vaArr=Array.from({length:N},(_,i)=>60+(220-60)*i/(N-1));
+  drawChart('ch_va',vaArr,vaArr.map(v=>calcI0(np,rr,v,igb)),va,i0_calc,
+    'vamax (km/h)',60,220,'#b08aff');
+
+  // igb chart
+  const igbArr=Array.from({length:N},(_,i)=>0.5+(1.5-0.5)*i/(N-1));
+  drawChart('ch_igb',igbArr,igbArr.map(g=>calcI0(np,rr,va,g)),igb,i0_calc,
+    'igb',0.5,1.5,'#ffc840');
+}
+
+// ═══════════════════════════════════════════════
+//  GEAR TYPE / VEH TYPE TOGGLES
+// ═══════════════════════════════════════════════
+function setGearType(t){
+  gearType=t;
+  const on ={border:'1px solid var(--teal)',background:'var(--teal-bg)',color:'var(--teal)'};
+  const off={border:'1px solid var(--rule)',background:'var(--surf2)',color:'var(--ink3)'};
+  Object.assign(document.getElementById('btn_hypoid').style, t==='hypoid'?on:off);
+  Object.assign(document.getElementById('btn_bevel').style,  t==='bevel' ?on:off);
+  document.getElementById('k_row').style.display = t==='hypoid'?'block':'none';
+  updateSliderFill('sl_K');
+  calcGear();
+}
+function setVehType(t){
+  vehType=t;
+  const onP={border:'1px solid var(--blue)',background:'#051830',color:'var(--blue)'};
+  const onC={border:'1px solid var(--amber)',background:'#181000',color:'var(--amber)'};
+  const off={border:'1px solid var(--rule)',background:'var(--surf2)',color:'var(--ink3)'};
+  Object.assign(document.getElementById('btn_pass').style, t==='passenger'?onP:off);
+  Object.assign(document.getElementById('btn_comm').style, t==='commercial'?onC:off);
+  calcGear();
+}
+
+// GCD (Euclidean)
+function gcd(a,b){ return b===0?a:gcd(b,a%b); }
+
+// ═══════════════════════════════════════════════
+//  GEAR TEETH CORRECTION
+// ═══════════════════════════════════════════════
+function calcGear(){
+  const z1=parseInt(document.getElementById('g_z1').value)||9;
+  const z2=parseInt(document.getElementById('g_z2').value)||41;
+  const K=parseFloat(document.getElementById('n_K').value)||1.35;
+  const{np,rr,igb,va}=P;
+  const z1min=vehType==='passenger'?9:6;
+
+  // ── 公式描述 ──
+  const descEl=document.getElementById('gear_formula_desc');
+  if(gearType==='hypoid'){
+    descEl.innerHTML=
+      `<span style="color:var(--teal)">双曲面齿轮（式5-2）：</span>`+
+      ` i₀h = K × r₂/r₁ ≈ <b>K × z₂/z₁</b> &nbsp;（K = cosβ₂/cosβ₁，β₁&gt;β₂，K∈[1.25,1.50]）<br>`+
+      `当前 K = <span style="color:var(--amber)">${K.toFixed(2)}</span>`+
+      ` ∴ i₀h = ${K.toFixed(2)} × z₂/z₁`;
+    document.getElementById('g_result_label').textContent='双曲面 i₀h = K·z₂/z₁';
+  } else {
+    descEl.innerHTML=
+      `<span style="color:var(--teal)">弧齿锥齿轮（式5-3）：</span>`+
+      ` i₀t = r₂/r₁ ≈ <b>z₂/z₁</b>&emsp;（传动比等于从动/主动齿数之比）`;
+    document.getElementById('g_result_label').textContent='弧齿锥 i₀t = z₂/z₁';
+  }
+
+  // ── 计算实际 i₀_gear ──
+  const i0g = gearType==='hypoid' ? K*z2/z1 : z2/z1;
+  const delta=i0_calc>0?((i0g-i0_calc)/i0_calc*100):0;
+
+  document.getElementById('g_result').textContent=i0g.toFixed(4);
+  const dEl=document.getElementById('g_delta');
+  dEl.textContent=`相对计算值偏差：${delta>=0?'+':''}${delta.toFixed(2)}%`;
+  dEl.style.color=Math.abs(delta)<1?'var(--green)':Math.abs(delta)<3?'var(--amber)':'var(--red)';
+
+  // ── 设计准则检验 ──
+  const z1pz2=z1+z2;
+  const divisor=gcd(z1,z2);
+  const rules=[
+    {
+      idx:'①',
+      text:`z₁、z₂ 之间无公约数`,
+      detail: divisor===1 ? `gcd(${z1},${z2}) = 1 ✓` : `gcd(${z1},${z2}) = ${divisor}，存在公因数 — 建议修改`,
+      ok: divisor===1
+    },
+    {
+      idx:'②',
+      text:`z₁ + z₂ ≥ 40`,
+      detail:`z₁+z₂ = ${z1}+${z2} = ${z1pz2}${z1pz2>=40?' ✓':' — 偏小，建议增大齿数'}`,
+      ok: z1pz2>=40
+    },
+    {
+      idx:'③',
+      text: vehType==='passenger'?`乘用车 z₁ ≥ 9`:`商用车 z₁ ≥ 6`,
+      detail: z1>=z1min ? `z₁ = ${z1} ≥ ${z1min} ✓` : `z₁ = ${z1} < ${z1min} — 不满足最小齿数要求`,
+      ok: z1>=z1min
+    },
+    {
+      idx:'④',
+      text:`i₀ 较大时 z₁ 尽量取少`,
+      detail:(()=>{
+        if(i0_calc<=0) return '—';
+        const suggestion = i0_calc>6?'建议 z₁ ≤ 8':i0_calc>5?'建议 z₁ ≤ 10':'z₁ 范围正常';
+        const ok2=(i0_calc>6&&z1<=8)||(i0_calc>5&&i0_calc<=6&&z1<=10)||(i0_calc<=5);
+        return `i₀目标 = ${i0_calc.toFixed(3)}，当前 z₁ = ${z1}，${suggestion}`;
+      })(),
+      ok:(()=>{
+        if(i0_calc<=0) return true;
+        if(i0_calc>6) return z1<=8;
+        if(i0_calc>5) return z1<=10;
+        return true;
+      })()
+    },
+    {
+      idx:'⑤',
+      text:`z₁ 与 z₂ 搭配适宜（齿数比合理）`,
+      detail:(()=>{
+        const ratio=z2/z1;
+        if(ratio<2) return `z₂/z₁ = ${ratio.toFixed(2)} — 比值偏小，啮合强度较弱`;
+        if(ratio>12) return `z₂/z₁ = ${ratio.toFixed(2)} — 比值偏大，尺寸不均衡`;
+        return `z₂/z₁ = ${ratio.toFixed(2)}，搭配合理 ✓`;
+      })(),
+      ok:(()=>{const r=z2/z1;return r>=2&&r<=12;})()
+    },
+  ];
+
+  const rulesDiv=document.getElementById('rules_check');
+  rulesDiv.innerHTML=rules.map(r=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;font-size:.98rem">
+      <span style="font-family:var(--mono);color:var(--ink3);min-width:18px">${r.idx}</span>
+      <span style="min-width:130px;color:var(--ink2)">${r.text}</span>
+      <span style="flex:1;font-family:var(--mono);color:${r.ok?'var(--green)':'var(--red)'}">${r.detail}</span>
+      <span style="font-size:1.1rem;line-height:1">${r.ok?'✅':'❌'}</span>
+    </div>`).join('');
+
+  // ── 反算最高车速 ──
+  const vamax_rev=0.377*rr*np/(igb*i0g);
+  const dv=vamax_rev-va;
+  const dpct=dv/va*100;
+
+  document.getElementById('rv_vamax').textContent=vamax_rev.toFixed(2);
+  document.getElementById('rv_target').textContent=va.toFixed(1)+' km/h';
+
+  const dvEl=document.getElementById('rv_dv');
+  dvEl.textContent=(dv>=0?'+':'')+dv.toFixed(2)+' km/h';
+  dvEl.style.color=Math.abs(dpct)<1?'var(--green)':Math.abs(dpct)<3?'var(--amber)':'var(--red)';
+
+  const pEl=document.getElementById('rv_pct');
+  pEl.textContent=(dpct>=0?'+':'')+dpct.toFixed(2)+'%';
+  pEl.style.color=Math.abs(dpct)<1?'var(--green)':Math.abs(dpct)<3?'var(--amber)':'var(--red)';
+
+  const fmtGear=gearType==='hypoid'?`K×z₂/z₁=${K.toFixed(2)}×${z2}/${z1}`:`z₂/z₁=${z2}/${z1}`;
+  document.getElementById('rv_steps').innerHTML=
+    `i₀_gear = ${fmtGear}<br>`+
+    `　　　　= ${i0g.toFixed(4)}<br>`+
+    `v = 0.377×${rr}×${np}<br>`+
+    `　 ÷(${igb}×${i0g.toFixed(4)})<br>`+
+    `　 = <b style="color:var(--teal)">${vamax_rev.toFixed(2)}</b> km/h`;
+
+  document.getElementById('rv_bar_label').textContent=
+    `设计 ${va} km/h  vs  实际 ${vamax_rev.toFixed(1)} km/h`;
+  const barMax=250;
+  document.getElementById('rv_bar_design').style.width=(va/barMax*100).toFixed(1)+'%';
+  document.getElementById('rv_bar_actual').style.width=(Math.min(vamax_rev,barMax)/barMax*100).toFixed(1)+'%';
+
+  // ── 推荐齿数组合 ──
+  // For hypoid: need K * z2c/z1c ≈ i0_calc → z2c/z1c ≈ i0_calc/K
+  const targetRatio = gearType==='hypoid' ? i0_calc/K : i0_calc;
+  const combos=[];
+  for(let z1c=z1min;z1c<=18;z1c++){
+    for(let z2c=Math.max(20,Math.ceil(z1c*2));z2c<=120;z2c++){
+      const actualI0 = gearType==='hypoid' ? K*z2c/z1c : z2c/z1c;
+      const err=i0_calc>0?Math.abs(actualI0-i0_calc)/i0_calc*100:0;
+      if(err<2.5&&gcd(z1c,z2c)===1&&(z1c+z2c)>=40){
+        const vrev=0.377*rr*np/(igb*actualI0);
+        combos.push({z1:z1c,z2:z2c,i0:actualI0,err,vrev});
+      }
+    }
+  }
+  combos.sort((a,b)=>a.err-b.err);
+  const top=combos.slice(0,14);
+
+  document.getElementById('combos_label').textContent=
+    `推荐相近齿数组合（z₁≥${z1min}，gcd=1，z₁+z₂≥40，误差<2.5%）：`;
+
+  const div=document.getElementById('gear_combos');
+  div.innerHTML='';
+  top.forEach(c=>{
+    const isSelected=c.z1===z1&&c.z2===z2;
+    const chip=document.createElement('div');
+    chip.className='combo-chip'+(isSelected?' selected':'');
+    chip.innerHTML=`z₁=${c.z1}/z₂=${c.z2} i₀=${c.i0.toFixed(4)}`+
+      `<span class="err" style="color:var(--teal)"> v=${c.vrev.toFixed(1)}</span>`+
+      `<span class="err">±${c.err.toFixed(2)}%</span>`;
+    chip.onclick=()=>{
+      document.getElementById('g_z1').value=c.z1;
+      document.getElementById('g_z2').value=c.z2;
+      calcGear();
+    };
+    div.appendChild(chip);
+  });
+  if(top.length===0){
+    div.innerHTML='<span style="color:var(--ink3);font-size:1.0rem">未找到符合所有准则的齿数组合，请调整参数</span>';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+['sl_np','sl_rr','sl_va','sl_igb','sl_K'].forEach(id=>updateSliderFill(id));
+
+// Auto-suggest first combo
+function autoSelectBestGear(){
+  const K=parseFloat(document.getElementById('n_K').value)||1.35;
+  const z1min=vehType==='passenger'?9:6;
+  const combos=[];
+  for(let z1c=z1min;z1c<=18;z1c++){
+    for(let z2c=Math.max(20,z1c*2);z2c<=120;z2c++){
+      const actualI0=gearType==='hypoid'?K*z2c/z1c:z2c/z1c;
+      const err=i0_calc>0?Math.abs(actualI0-i0_calc)/i0_calc*100:999;
+      if(err<2.5&&gcd(z1c,z2c)===1&&(z1c+z2c)>=40)
+        combos.push({z1:z1c,z2:z2c,err});
+    }
+  }
+  combos.sort((a,b)=>a.err-b.err);
+  if(combos.length>0){
+    document.getElementById('g_z1').value=combos[0].z1;
+    document.getElementById('g_z2').value=combos[0].z2;
+  }
+}
+
+calc();
+setGearType('hypoid');  // initialise gear type UI + calls calcGear
+setVehType('passenger');
+
+// Redraw charts on resize
+window.addEventListener('resize',()=>{if(i0_calc>0)drawAllCharts()});
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+if (e.key === 'F12' || 
+(e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+(e.ctrlKey && e.key === 'U') ||
+(e.ctrlKey && e.key === 'S')) {
+e.preventDefault();
+return false;
+}
+});
+
+</script>
+<script>
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U') ||
+        (e.ctrlKey && e.key === 'S')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+</script>
+
+</body>
+</html>
